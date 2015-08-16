@@ -1,12 +1,15 @@
 /*
     Cross-platform serial / RS232 library
-    Version 0.1, 16/06/2015
+    Version 0.2, 16/08/2015
     -> All platforms header
     -> rs232.h
+
     The MIT License (MIT)
 
-    Copyright (c) 2007 - 2015 Frédéric Meslin
-    Contact: fredericmeslin@hotmail.com, @marzacdev
+    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Email: fredericmeslin@hotmail.com
+    Website: www.fredslab.net
+    Twitter: @marzacdev
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +39,7 @@
 /*****************************************************************************/
     int comEnumerate();
     int comGetNoPorts();
+    void comTerminate();
 
     const char * comGetPortName(int index);
     int comFindPort(const char * name);
@@ -44,7 +48,9 @@
 /*****************************************************************************/
     int  comOpen(int index, int baudrate);
     void comClose(int index);
-    int  comWrite(int index, const char * buffer, size_t len);
-    int  comRead(int index, char * buffer, size_t len);
+    void comCloseAll();
+
+    int comWrite(int index, const char * buffer, size_t len);
+    int comRead(int index, char * buffer, size_t len);
 
 #endif // RS232_H

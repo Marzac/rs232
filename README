@@ -1,11 +1,11 @@
 Cross-platform serial / RS232 library
-Version 0.1, 16/06/2015
+Version 0.2, 16/08/2015
 The MIT License (MIT)
 
 Supported platforms:
 - Windows XP / Win7
-- Linux (in test)
-- MAC-OS X (in test)
+- Linux
+- MAC-OS X
 
 Copyright (c) 2007 - 2015 Frédéric Meslin
 Contact: fredericmeslin@hotmail.com, @marzacdev
