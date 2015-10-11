@@ -1,6 +1,6 @@
 /*
     Cross-platform serial / RS232 library
-    Version 0.2, 16/08/2015
+    Version 0.21, 11/10/2015
     -> LINUX and MacOS implementation
     -> rs232-linux.c
 

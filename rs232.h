@@ -1,6 +1,6 @@
 /*
     Cross-platform serial / RS232 library
-    Version 0.2, 16/08/2015
+    Version 0.21, 11/10/2015
     -> All platforms header
     -> rs232.h
 
@@ -33,6 +33,10 @@
 #ifndef RS232_H
 #define RS232_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
     #include <stdint.h>
     #include <stdlib.h>
 
@@ -41,8 +45,8 @@
     /**
     * \mainpage RS232
     * \section intro_sec C / C++ RS232 cross-platform serial library
-    * <b>Version 0.2 - 16/08/2015</b>
-	*
+    * <b>Version 0.21 - 11/10/2015</b>
+    *
     * Supported platforms:  
     * - Windows (XP / Win7, possibly 8 and 10)  
     * - Linux  
@@ -143,5 +147,9 @@
      * \return number of bytes transferred
      */                
     int comRead(int index, char * buffer, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RS232_H
