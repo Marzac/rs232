@@ -1,5 +1,5 @@
 # rs232
-C / C++ RS232 cross-platform serial library
+C / C++ RS232 cross-platform serial library  
 Version 0.21, 11/10/2015
 
 Supported platforms:  
