@@ -6,7 +6,7 @@
     
     The MIT License (MIT)
 
-    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Copyright (c) 2013-2015 FrÃ©dÃ©ric Meslin, Florent Touchard
     Email: fredericmeslin@hotmail.com
     Website: www.fredslab.net
     Twitter: @marzacdev
@@ -53,7 +53,7 @@ static COMDevice comDevices[COM_MAXDEVICES];
 static int noDevices = 0;
 
 #define COM_MINDEVNAME 16384
-const char * comPtn = "COM???";
+const char * comPtn = "COM????";
 
 /*****************************************************************************/
 const char * findPattern(const char * string, const char * pattern, int * value);
@@ -301,7 +301,7 @@ const char * findPattern(const char * string, const char * pattern, int * value)
                     if (*pp ++ == '\0') break;
                 }else{
                     n = 0;
-                    pp = comPtn;
+                    pp = pattern;
                 }
             }else{
             // Expect a character
@@ -309,7 +309,7 @@ const char * findPattern(const char * string, const char * pattern, int * value)
                     if (*pp ++ == '\0') break;
                 }else{
                     n = 0;
-                    pp = comPtn;
+                    pp = pattern;
                 }
             }
         }
