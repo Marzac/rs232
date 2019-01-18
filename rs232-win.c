@@ -6,7 +6,7 @@
     
     The MIT License (MIT)
 
-    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Copyright (c) 2013-2015 Frï¿½dï¿½ric Meslin, Florent Touchard
     Email: fredericmeslin@hotmail.com
     Website: www.fredslab.net
     Twitter: @marzacdev
@@ -48,11 +48,15 @@ typedef struct {
 } COMDevice;
 
 /*****************************************************************************/
-#define COM_MAXDEVICES 64
+#if !defined(COM_MAXDEVICES)
+    #define COM_MAXDEVICES 64
+#endif
 static COMDevice comDevices[COM_MAXDEVICES];
 static int noDevices = 0;
 
-#define COM_MINDEVNAME 16384
+#if !defined(COM_MINDEVNAME)
+    #define COM_MINDEVNAME 16384
+#endif
 const char * comPtn = "COM???";
 
 /*****************************************************************************/

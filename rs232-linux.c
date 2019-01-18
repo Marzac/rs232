@@ -69,7 +69,9 @@ typedef struct {
     int handle;
 } COMDevice;
 
-#define COM_MAXDEVICES        64
+#if !defined(COM_MAXDEVICES)
+    #define COM_MAXDEVICES        64
+#endif
 static COMDevice comDevices[COM_MAXDEVICES];
 static int noDevices = 0;
 
