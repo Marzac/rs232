@@ -137,7 +137,7 @@ int comEnumerate()
     size_t size = COM_MINDEVNAME;
     char * list = (char *) malloc(size);
     SetLastError(0);
-    QueryDosDeviceA(NULL, list, size);
+    QueryDosDeviceA(NULL, list, (uint32_t) size);
     while (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
         size *= 2;
         char * nlist = realloc(list, size);
@@ -147,7 +147,7 @@ int comEnumerate()
         }
         list = nlist;
         SetLastError(0);
-        QueryDosDeviceA(NULL, list, size);
+        QueryDosDeviceA(NULL, list, (uint32_t) size);
     }
 // Gather all COM ports
     int port;
@@ -165,7 +165,7 @@ int comEnumerate()
 
 void comTerminate()
 {
-    comCloseAll();    
+    comCloseAll();
 }
 
 int comGetNoPorts()
@@ -247,10 +247,10 @@ int comOpen(int index, int baudrate)
 
 void comClose(int index)
 {
-    if (index < 0 || index >= noDevices) 
+    if (index < 0 || index >= noDevices)
         return;
     COMDevice * com = &comDevices[index];
-    if (!com->handle) 
+    if (!com->handle)
         return;
     CloseHandle(com->handle);
     com->handle = 0;
@@ -269,7 +269,7 @@ int comWrite(int index, const char * buffer, size_t len)
         return 0;
     COMDevice * com = &comDevices[index];
     uint32_t bytes = 0;
-    WriteFile(com->handle, buffer, len, &bytes, NULL);
+    WriteFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
     return bytes;
 }
 
@@ -279,7 +279,7 @@ int comRead(int index, char * buffer, size_t len)
         return 0;
     COMDevice * com = &comDevices[index];
     uint32_t bytes = 0;
-    ReadFile(com->handle, buffer, len, &bytes, NULL);
+    ReadFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
     return bytes;
 }
 

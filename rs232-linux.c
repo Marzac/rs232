@@ -39,12 +39,16 @@
 #include "rs232.h"
 
 #include <unistd.h>
-#define __USE_MISC // For CRTSCTS
+#if !defined(__USE_MISC)
+    #define __USE_MISC // For CRTSCTS
+#endif
 #include <termios.h>
 #include <fcntl.h>
 #include <dirent.h>
 
-#define __USE_SVID // For strdup
+#if !defined(__USE_SVID)
+    #define __USE_SVID // For strdup
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -178,7 +182,7 @@ void comClose(int index)
     if (index >= noDevices || index < 0)
         return;
     COMDevice * com = &comDevices[index];
-    if (com->handle < 0) 
+    if (com->handle < 0)
         return;
     tcdrain(com->handle);
     close(com->handle);
@@ -214,6 +218,11 @@ int comRead(int index, char * buffer, size_t len)
     if (res < 0)
         res = 0;
     return res;
+}
+
+int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout)
+{
+	return 0;
 }
 
 /*****************************************************************************/
