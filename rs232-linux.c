@@ -222,7 +222,28 @@ int comRead(int index, char * buffer, size_t len)
 
 int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout)
 {
-	return 0;
+    fd_set set;
+    struct timeval to;
+    int rv, res;
+    
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+
+    FD_ZERO(&set); /* clear the set */
+    FD_SET(comDevices[index].handle, &set);
+
+    to.tv_sec = timeout / 1000;
+    to.tv_usec = (timeout % 1000) * 1000;
+
+    rv = select(comDevices[index].handle + 1, &set, NULL, NULL, &to);
+    if(rv <= 0)
+        return 0;
+    res = (int) read(comDevices[index].handle, buffer, len);
+    if (res < 0)
+        res = 0;
+    return res;
 }
 
 /*****************************************************************************/

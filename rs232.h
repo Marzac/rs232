@@ -6,7 +6,7 @@
 
     The MIT License (MIT)
 
-    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Copyright (c) 2013-2015 Frï¿½dï¿½ric Meslin, Florent Touchard
     Email: fredericmeslin@hotmail.com
     Website: www.fredslab.net
     Twitter: @marzacdev
@@ -142,12 +142,24 @@ extern "C" {
      * \fn int comRead(int index, const char * buffer, size_t len)
      * \brief Read data from the port (non-blocking)
      * \param[in] index port index
-     * \param[in] buffer pointer to receive buffer
+     * \param[out] buffer pointer to receive buffer
      * \param[in] len length of receive buffer in bytes
      * \return number of bytes transferred
      */                
     int comRead(int index, char * buffer, size_t len);
 
+    
+    /**
+     * \brief A blocking version of comRead().
+     * \param[in] index port index
+     * \param[in] buffer pointer to receive buffer
+     * \param[out] len length of receive buffer in bytes
+     * \param[in] maximum number of ms to wait until 'len' bytes are received.
+     * \return number of bytes transferred
+     */
+    int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout);
+    
+    
 #ifdef __cplusplus
 }
 #endif

@@ -283,6 +283,33 @@ int comRead(int index, char * buffer, size_t len)
     return bytes;
 }
 
+int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    COMDevice * com = &comDevices[index];
+    COMMTIMEOUTS timeouts;
+
+    timeouts.ReadIntervalTimeout = MAX_DWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = (uint32_t) timeout;
+    timeouts.WriteTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutMultiplier = 0;
+    SetCommTimeouts(com->handle, &timeouts);
+
+    uint32_t bytes = 0;
+    ReadFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
+
+    timeouts.ReadIntervalTimeout = MAX_DWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutMultiplier = 0;
+    SetCommTimeouts(com->handle, &timeouts);
+
+    return bytes;
+}
+
 /*****************************************************************************/
 const char * findPattern(const char * string, const char * pattern, int * value)
 {
