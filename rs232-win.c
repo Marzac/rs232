@@ -203,18 +203,18 @@ const char * comGetInternalName(int index)
 }
 
 /*****************************************************************************/
-int comOpen(int index, int baudrate)
+int comOpen(int index, int baudrate_and_parity)
 {
     DCB config;
     COMMTIMEOUTS timeouts;
-    if (index < 0 || index >= noDevices) 
+    if (index < 0 || index >= noDevices)
         return 0;
 // Close if already open
     COMDevice * com = &comDevices[index];
     if (com->handle) comClose(index);
 // Open COM port
     void * handle = CreateFileA(comGetInternalName(index), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (handle == INVALID_HANDLE_VALUE) 
+    if (handle == INVALID_HANDLE_VALUE)
         return 0;
     com->handle = handle;
 // Prepare read / write timeouts
@@ -227,14 +227,21 @@ int comOpen(int index, int baudrate)
     SetCommTimeouts(handle, &timeouts);
 // Prepare serial communication format
     GetCommState(handle, &config);
-    config.BaudRate = baudrate;
-    config.fBinary = true;
-    config.fParity = 0;
+    config.BaudRate = baudrate_and_parity & BAUDRATE_BITMASK;
+    config.fBinary = 1;
+    config.fParity = 1;
     config.fErrorChar = 0;
     config.fNull = 0;
     config.fAbortOnError = 0;
     config.ByteSize = 8;
-    config.Parity = 0;
+    switch (baudrate_and_parity & PARITY_BITMASK)
+    {
+        case PARITY_NONE:  config.Parity = 0; break;
+        case PARITY_ODD:   config.Parity = 1; break;
+        case PARITY_EVEN:  config.Parity = 2; break;
+        case PARITY_SPACE: config.Parity = 3; break;
+        case PARITY_MARK:  config.Parity = 4; break;
+    }
     config.StopBits = 0;
     config.EvtChar = '\n';
 // Set the port state

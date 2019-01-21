@@ -57,7 +57,16 @@ extern "C" {
     * Website: www.fredslab.net <br>
     * Twitter: \@marzacdev <br>
     */
-    
+
+#define PARITY_NONE          0x00000000          //see comOpen()
+#define PARITY_EVEN          0x10000000          //see comOpen()
+#define PARITY_ODD           0x20000000          //see comOpen()
+#define PARITY_SPACE         0x30000000          //see comOpen()
+#define PARITY_MARK          0x40000000          //see comOpen()
+
+#define PARITY_BITMASK       0xF0000000
+#define BAUDRATE_BITMASK     0x0FFFFFFF
+
 /*****************************************************************************/
     /**
      * \fn int comEnumerate()
@@ -76,7 +85,7 @@ extern "C" {
     /**
      * \fn int comTerminate()
      * \brief Release ports and memory resources used by the library
-     */    
+     */
     void comTerminate();
 
     /**
@@ -84,7 +93,7 @@ extern "C" {
      * \brief Get port user-friendly name
      * \param[in] index port index
      * \return null terminated port name
-     */    
+     */
     const char * comGetPortName(int index);
 
     /**
@@ -92,7 +101,7 @@ extern "C" {
      * \brief Get port operating-system name
      * \param[in] index port index
      * \return null terminated port name
-     */        
+     */
     const char * comGetInternalName(int index);
     
     /**
@@ -100,7 +109,7 @@ extern "C" {
      * \brief Try to find a port given its user-friendly name
      * \param[in] name port name (case sensitive)
      * \return index of found port or -1 if not enumerated
-     */        
+     */
     int comFindPort(const char * name);
 
 /*****************************************************************************/
@@ -109,10 +118,13 @@ extern "C" {
      * \brief Try to open a port at a specific baudrate
      * \brief (No parity, single stop bit, no hardware flow control)
      * \param[in] index port index
-     * \param[in] baudrate port baudrate
+     * \param[in] baudrate port baudrate plus parity (see PARITY_*).
+     *            i.E. 9600|PARITY_EVEN.
+     *            Optionally also only a baudrate may be specified. In this
+     *            case Parity is PARITY_NONE
      * \return 1 if opened, 0 if not available
-     */        
-    int comOpen(int index, int baudrate);
+     */
+    int comOpen(int index, int baudrate_and_parity);
     
     /**
      * \fn void comClose(int index)
