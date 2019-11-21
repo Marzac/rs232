@@ -112,6 +112,11 @@ typedef struct _DCB {
 #define OPEN_EXISTING               3
 #define MAX_DWORD                   0xFFFFFFFF
 
+#define SETRTS                      3
+#define CLRRTS                      4
+#define SETDTR                      5
+#define CLRDTR                      6
+
 /*****************************************************************************/
 /** Windows system functions */
 void * __stdcall CreateFileA(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile);
@@ -129,6 +134,7 @@ bool __stdcall GetCommTimeouts(void * hFile, COMMTIMEOUTS * lpCommTimeouts);
 bool __stdcall SetCommState(void * hFile, DCB * lpDCB);
 bool __stdcall SetCommTimeouts(void * hFile, COMMTIMEOUTS * lpCommTimeouts);
 bool __stdcall SetupComm(void * hFile, uint32_t dwInQueue, uint32_t dwOutQueue);
+bool __stdcall EscapeCommFunction(void * hFile, uint32_t dwFunc);
 
 /*****************************************************************************/
 int comEnumerate()
@@ -165,7 +171,7 @@ int comEnumerate()
 
 void comTerminate()
 {
-    comCloseAll();
+    comCloseAll();    
 }
 
 int comGetNoPorts()
@@ -254,10 +260,10 @@ int comOpen(int index, int baudrate_and_parity)
 
 void comClose(int index)
 {
-    if (index < 0 || index >= noDevices)
+    if (index < 0 || index >= noDevices) 
         return;
     COMDevice * com = &comDevices[index];
-    if (!com->handle)
+    if (!com->handle) 
         return;
     CloseHandle(com->handle);
     com->handle = 0;
@@ -356,5 +362,22 @@ const char * findPattern(const char * string, const char * pattern, int * value)
     * value = n;
     return sp;
 }
+
+
+int comSetDtr(int index, int state)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    return EscapeCommFunction(comDevices[index].handle, state ? SETDTR :CLRDTR);
+}
+
+
+int comSetRts(int index, int state)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    return EscapeCommFunction(comDevices[index].handle, state ? SETRTS :CLRRTS);
+}
+
 
 #endif // _WIN32

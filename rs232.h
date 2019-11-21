@@ -85,7 +85,7 @@ extern "C" {
     /**
      * \fn int comTerminate()
      * \brief Release ports and memory resources used by the library
-     */
+     */    
     void comTerminate();
 
     /**
@@ -93,7 +93,7 @@ extern "C" {
      * \brief Get port user-friendly name
      * \param[in] index port index
      * \return null terminated port name
-     */
+     */    
     const char * comGetPortName(int index);
 
     /**
@@ -101,7 +101,7 @@ extern "C" {
      * \brief Get port operating-system name
      * \param[in] index port index
      * \return null terminated port name
-     */
+     */        
     const char * comGetInternalName(int index);
     
     /**
@@ -109,7 +109,7 @@ extern "C" {
      * \brief Try to find a port given its user-friendly name
      * \param[in] name port name (case sensitive)
      * \return index of found port or -1 if not enumerated
-     */
+     */        
     int comFindPort(const char * name);
 
 /*****************************************************************************/
@@ -123,7 +123,7 @@ extern "C" {
      *            Optionally also only a baudrate may be specified. In this
      *            case Parity is PARITY_NONE
      * \return 1 if opened, 0 if not available
-     */
+     */        
     int comOpen(int index, int baudrate_and_parity);
     
     /**
@@ -170,6 +170,24 @@ extern "C" {
      * \return number of bytes transferred
      */
     int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout);
+    
+    
+    /**
+     * \brief Set DTR Line
+     * \param[in] index port index
+     * \param[in] new state of DTR line
+     * \return 0 on failure otherwise 1
+     */
+    int comSetDtr(int index, int state);
+    
+    
+    /**
+     * \brief Set RTS Line
+     * \param[in] index port index
+     * \param[in] new state of RTS line
+     * \return 0 on failure otherwise 1
+     */
+    int comSetRts(int index, int state);
     
     
 #ifdef __cplusplus

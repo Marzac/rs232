@@ -52,6 +52,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 /*****************************************************************************/
 /** Base name for COM devices */
@@ -311,4 +312,29 @@ void _AppendDevices(const char * base)
     closedir(dirp);
 }
 
-#endif // unix
+
+int comSetDtr(int index, int state)
+{
+	int cmd = state ? TIOCMBIS : TIOCMBIC;
+    int flag = TIOCM_DTR;
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+	return ioctl(comDevices[index].handle, cmd, &flag) != -1;
+}
+
+
+int comSetRts(int index, int state)
+{
+	int cmd = state ? TIOCMBIS : TIOCMBIC;
+    int flag = TIOCM_RTS;
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+	return ioctl(comDevices[index].handle, cmd, &flag) != -1;
+}
+
+
+##endif // unix
