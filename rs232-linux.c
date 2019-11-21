@@ -140,20 +140,8 @@ const char * comGetPortName(int index) {
 /*****************************************************************************/
 int comOpen(int index, int baudrate_and_parity)
 {
-    int parity;
     if (index >= noDevices || index < 0)
         return 0;
-    switch (baudrate_and_parity & PARITY_BITMASK)
-    {
-        case PARITY_NONE:  parity = 0; break;
-        case PARITY_ODD:   parity = PARENB|PARODD; break;
-        case PARITY_EVEN:  parity = PARENB; break;
-#if !defined(_DARWIN_C_SOURCE)
-        case PARITY_SPACE: parity = PARENB|CMSPAR; break;
-        case PARITY_MARK:  parity = PARENB|CMSPAR|PARODD; break;
-#endif
-        default: return 0;
-    }
 // Close if already open
     COMDevice * com = &comDevices[index];
     if (com->handle >= 0) comClose(index);
@@ -171,8 +159,16 @@ int comOpen(int index, int baudrate_and_parity)
     config.c_iflag |= IGNPAR | IGNBRK;
     config.c_oflag &= ~(OPOST | ONLCR | OCRNL);
     config.c_cflag &= ~(PARENB | PARODD | CSTOPB | CSIZE | CRTSCTS);
-    config.c_cflag |= CLOCAL | CREAD | CS8 | parity;
+    config.c_cflag |= CLOCAL | CREAD | CS8;
     config.c_lflag &= ~(ICANON | ISIG | ECHO);
+    switch (baudrate_and_parity & PARITY_BITMASK)
+    {
+        case PARITY_NONE:  break;
+        case PARITY_ODD:   config.c_cflag |= PARENB|PARODD; break;
+        case PARITY_EVEN:  config.c_cflag |= PARENB; break;
+        case PARITY_SPACE: config.c_cflag |= PARENB|CMSPAR; break;
+        case PARITY_MARK:  config.c_cflag |= PARENB|CMSPAR|PARODD; break;
+    }
     int flag = _BaudFlag(baudrate_and_parity & BAUDRATE_BITMASK);
     cfsetospeed(&config, flag);
     cfsetispeed(&config, flag);
