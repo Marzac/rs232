@@ -167,8 +167,10 @@ int comOpen(int index, int baudrate_and_parity)
         case PARITY_NONE:  break;
         case PARITY_ODD:   config.c_cflag |= PARENB|PARODD; break;
         case PARITY_EVEN:  config.c_cflag |= PARENB; break;
+#if !defined(_DARWIN_C_SOURCE)
         case PARITY_SPACE: config.c_cflag |= PARENB|CMSPAR; break;
         case PARITY_MARK:  config.c_cflag |= PARENB|CMSPAR|PARODD; break;
+#endif
     }
     int flag = _BaudFlag(baudrate_and_parity & BAUDRATE_BITMASK);
     cfsetospeed(&config, flag);
@@ -337,4 +339,4 @@ int comSetRts(int index, int state)
 }
 
 
-##endif // unix
+#endif // unix
