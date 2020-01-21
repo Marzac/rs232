@@ -156,7 +156,7 @@ int comOpen(int index, int baudrate_and_parity)
     struct termios config;
     memset(&config, 0, sizeof(config));
     tcgetattr(handle, &config);
-    config.c_iflag &= ~(INLCR | ICRNL);
+    config.c_iflag &= ~(INLCR | ICRNL | IXON | IXOFF);
     config.c_iflag |= IGNPAR | IGNBRK;
     config.c_oflag &= ~(OPOST | ONLCR | OCRNL);
     config.c_cflag &= ~(PARENB | PARODD | CSTOPB | CSIZE | CRTSCTS);
