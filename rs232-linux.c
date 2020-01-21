@@ -39,15 +39,20 @@
 #include "rs232.h"
 
 #include <unistd.h>
-#define __USE_MISC // For CRTSCTS
+#if !defined(__USE_MISC)
+    #define __USE_MISC // For CRTSCTS
+#endif
 #include <termios.h>
 #include <fcntl.h>
 #include <dirent.h>
 
-#define __USE_SVID // For strdup
+#if !defined(__USE_SVID)
+    #define __USE_SVID // For strdup
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 /*****************************************************************************/
 /** Base name for COM devices */
@@ -69,7 +74,9 @@ typedef struct {
     int handle;
 } COMDevice;
 
-#define COM_MAXDEVICES        64
+#if !defined(COM_MAXDEVICES)
+    #define COM_MAXDEVICES        64
+#endif
 static COMDevice comDevices[COM_MAXDEVICES];
 static int noDevices = 0;
 
@@ -132,7 +139,7 @@ const char * comGetPortName(int index) {
 }
 
 /*****************************************************************************/
-int comOpen(int index, int baudrate)
+int comOpen(int index, int baudrate_and_parity)
 {
     if (index >= noDevices || index < 0)
         return 0;
@@ -149,13 +156,23 @@ int comOpen(int index, int baudrate)
     struct termios config;
     memset(&config, 0, sizeof(config));
     tcgetattr(handle, &config);
-    config.c_iflag &= ~(INLCR | ICRNL);
+    config.c_iflag &= ~(INLCR | ICRNL | IXON | IXOFF);
     config.c_iflag |= IGNPAR | IGNBRK;
     config.c_oflag &= ~(OPOST | ONLCR | OCRNL);
     config.c_cflag &= ~(PARENB | PARODD | CSTOPB | CSIZE | CRTSCTS);
     config.c_cflag |= CLOCAL | CREAD | CS8;
     config.c_lflag &= ~(ICANON | ISIG | ECHO);
-    int flag = _BaudFlag(baudrate);
+    switch (baudrate_and_parity & PARITY_BITMASK)
+    {
+        case PARITY_NONE:  break;
+        case PARITY_ODD:   config.c_cflag |= PARENB|PARODD; break;
+        case PARITY_EVEN:  config.c_cflag |= PARENB; break;
+#if !defined(_DARWIN_C_SOURCE)
+        case PARITY_SPACE: config.c_cflag |= PARENB|CMSPAR; break;
+        case PARITY_MARK:  config.c_cflag |= PARENB|CMSPAR|PARODD; break;
+#endif
+    }
+    int flag = _BaudFlag(baudrate_and_parity & BAUDRATE_BITMASK);
     cfsetospeed(&config, flag);
     cfsetispeed(&config, flag);
 // Timeouts configuration
@@ -176,7 +193,7 @@ void comClose(int index)
     if (index >= noDevices || index < 0)
         return;
     COMDevice * com = &comDevices[index];
-    if (com->handle < 0) 
+    if (com->handle < 0)
         return;
     tcdrain(com->handle);
     close(com->handle);
@@ -214,6 +231,32 @@ int comRead(int index, char * buffer, size_t len)
     return res;
 }
 
+int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout)
+{
+    fd_set set;
+    struct timeval to;
+    int rv, res;
+    
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+
+    FD_ZERO(&set); /* clear the set */
+    FD_SET(comDevices[index].handle, &set);
+
+    to.tv_sec = timeout / 1000;
+    to.tv_usec = (timeout % 1000) * 1000;
+
+    rv = select(comDevices[index].handle + 1, &set, NULL, NULL, &to);
+    if(rv <= 0)
+        return 0;
+    res = (int) read(comDevices[index].handle, buffer, len);
+    if (res < 0)
+        res = 0;
+    return res;
+}
+
 /*****************************************************************************/
 int _BaudFlag(int BaudRate)
 {
@@ -236,6 +279,19 @@ int _BaudFlag(int BaudRate)
         case 57600:   return B57600; break;
         case 115200:  return B115200; break;
         case 230400:  return B230400; break;
+#if defined(B500000)
+        case 500000: return B500000; break;
+        case 576000: return B576000; break;
+        case 921600: return B921600; break;
+        case 1000000: return B1000000; break;
+        case 1152000: return B1152000; break;
+        case 1500000: return B1500000; break;
+        case 2000000: return B2000000; break;
+        case 2500000: return B2500000; break;
+        case 3000000: return B3000000; break;
+        case 3500000: return B3500000; break;
+        case 4000000: return B4000000; break;
+#endif
         default : return B0; break;
     }
 }
@@ -257,5 +313,30 @@ void _AppendDevices(const char * base)
     }
     closedir(dirp);
 }
+
+
+int comSetDtr(int index, int state)
+{
+	int cmd = state ? TIOCMBIS : TIOCMBIC;
+    int flag = TIOCM_DTR;
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+	return ioctl(comDevices[index].handle, cmd, &flag) != -1;
+}
+
+
+int comSetRts(int index, int state)
+{
+	int cmd = state ? TIOCMBIS : TIOCMBIC;
+    int flag = TIOCM_RTS;
+    if (index >= noDevices || index < 0)
+        return 0;
+    if (comDevices[index].handle <= 0)
+        return 0;
+	return ioctl(comDevices[index].handle, cmd, &flag) != -1;
+}
+
 
 #endif // unix

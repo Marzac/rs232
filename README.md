@@ -1,13 +1,13 @@
 # rs232
 C / C++ RS232 cross-platform serial library  
-Version 0.21, 11/10/2015
+Version 0.22, 19/01/2019
 
 Supported platforms:  
 - Windows (XP / Win7, possibly 8 and 10)  
 - Linux  
 - MacOS X  
 
-Copyright (c) 2013-2015 Frédéric Meslin  
+Copyright (c) 2013-2015 Frï¿½dï¿½ric Meslin  
 Email: fredericmeslin@hotmail.com  
 Website: www.fredslab.net  
 Twitter: @marzacdev  

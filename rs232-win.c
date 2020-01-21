@@ -6,7 +6,7 @@
     
     The MIT License (MIT)
 
-    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Copyright (c) 2013-2015 Frï¿½dï¿½ric Meslin, Florent Touchard
     Email: fredericmeslin@hotmail.com
     Website: www.fredslab.net
     Twitter: @marzacdev
@@ -48,11 +48,15 @@ typedef struct {
 } COMDevice;
 
 /*****************************************************************************/
-#define COM_MAXDEVICES 64
+#if !defined(COM_MAXDEVICES)
+    #define COM_MAXDEVICES 64
+#endif
 static COMDevice comDevices[COM_MAXDEVICES];
 static int noDevices = 0;
 
-#define COM_MINDEVNAME 16384
+#if !defined(COM_MINDEVNAME)
+    #define COM_MINDEVNAME 16384
+#endif
 const char * comPtn = "COM???";
 
 /*****************************************************************************/
@@ -108,6 +112,11 @@ typedef struct _DCB {
 #define OPEN_EXISTING               3
 #define MAX_DWORD                   0xFFFFFFFF
 
+#define SETRTS                      3
+#define CLRRTS                      4
+#define SETDTR                      5
+#define CLRDTR                      6
+
 /*****************************************************************************/
 /** Windows system functions */
 void * __stdcall CreateFileA(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile);
@@ -125,6 +134,7 @@ bool __stdcall GetCommTimeouts(void * hFile, COMMTIMEOUTS * lpCommTimeouts);
 bool __stdcall SetCommState(void * hFile, DCB * lpDCB);
 bool __stdcall SetCommTimeouts(void * hFile, COMMTIMEOUTS * lpCommTimeouts);
 bool __stdcall SetupComm(void * hFile, uint32_t dwInQueue, uint32_t dwOutQueue);
+bool __stdcall EscapeCommFunction(void * hFile, uint32_t dwFunc);
 
 /*****************************************************************************/
 int comEnumerate()
@@ -133,7 +143,7 @@ int comEnumerate()
     size_t size = COM_MINDEVNAME;
     char * list = (char *) malloc(size);
     SetLastError(0);
-    QueryDosDeviceA(NULL, list, size);
+    QueryDosDeviceA(NULL, list, (uint32_t) size);
     while (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
         size *= 2;
         char * nlist = realloc(list, size);
@@ -143,7 +153,7 @@ int comEnumerate()
         }
         list = nlist;
         SetLastError(0);
-        QueryDosDeviceA(NULL, list, size);
+        QueryDosDeviceA(NULL, list, (uint32_t) size);
     }
 // Gather all COM ports
     int port;
@@ -199,18 +209,18 @@ const char * comGetInternalName(int index)
 }
 
 /*****************************************************************************/
-int comOpen(int index, int baudrate)
+int comOpen(int index, int baudrate_and_parity)
 {
     DCB config;
     COMMTIMEOUTS timeouts;
-    if (index < 0 || index >= noDevices) 
+    if (index < 0 || index >= noDevices)
         return 0;
 // Close if already open
     COMDevice * com = &comDevices[index];
     if (com->handle) comClose(index);
 // Open COM port
     void * handle = CreateFileA(comGetInternalName(index), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (handle == INVALID_HANDLE_VALUE) 
+    if (handle == INVALID_HANDLE_VALUE)
         return 0;
     com->handle = handle;
 // Prepare read / write timeouts
@@ -223,14 +233,21 @@ int comOpen(int index, int baudrate)
     SetCommTimeouts(handle, &timeouts);
 // Prepare serial communication format
     GetCommState(handle, &config);
-    config.BaudRate = baudrate;
-    config.fBinary = true;
-    config.fParity = 0;
+    config.BaudRate = baudrate_and_parity & BAUDRATE_BITMASK;
+    config.fBinary = 1;
+    config.fParity = 1;
     config.fErrorChar = 0;
     config.fNull = 0;
     config.fAbortOnError = 0;
     config.ByteSize = 8;
-    config.Parity = 0;
+    switch (baudrate_and_parity & PARITY_BITMASK)
+    {
+        case PARITY_NONE:  config.Parity = 0; break;
+        case PARITY_ODD:   config.Parity = 1; break;
+        case PARITY_EVEN:  config.Parity = 2; break;
+        case PARITY_SPACE: config.Parity = 3; break;
+        case PARITY_MARK:  config.Parity = 4; break;
+    }
     config.StopBits = 0;
     config.EvtChar = '\n';
 // Set the port state
@@ -265,7 +282,7 @@ int comWrite(int index, const char * buffer, size_t len)
         return 0;
     COMDevice * com = &comDevices[index];
     uint32_t bytes = 0;
-    WriteFile(com->handle, buffer, len, &bytes, NULL);
+    WriteFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
     return bytes;
 }
 
@@ -275,7 +292,34 @@ int comRead(int index, char * buffer, size_t len)
         return 0;
     COMDevice * com = &comDevices[index];
     uint32_t bytes = 0;
-    ReadFile(com->handle, buffer, len, &bytes, NULL);
+    ReadFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
+    return bytes;
+}
+
+int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    COMDevice * com = &comDevices[index];
+    COMMTIMEOUTS timeouts;
+
+    timeouts.ReadIntervalTimeout = MAX_DWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = (uint32_t) timeout;
+    timeouts.WriteTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutMultiplier = 0;
+    SetCommTimeouts(com->handle, &timeouts);
+
+    uint32_t bytes = 0;
+    ReadFile(com->handle, buffer, (uint32_t) len, &bytes, NULL);
+
+    timeouts.ReadIntervalTimeout = MAX_DWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutMultiplier = 0;
+    SetCommTimeouts(com->handle, &timeouts);
+
     return bytes;
 }
 
@@ -318,5 +362,22 @@ const char * findPattern(const char * string, const char * pattern, int * value)
     * value = n;
     return sp;
 }
+
+
+int comSetDtr(int index, int state)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    return EscapeCommFunction(comDevices[index].handle, state ? SETDTR :CLRDTR);
+}
+
+
+int comSetRts(int index, int state)
+{
+    if (index < 0 || index >= noDevices)
+        return 0;
+    return EscapeCommFunction(comDevices[index].handle, state ? SETRTS :CLRRTS);
+}
+
 
 #endif // _WIN32

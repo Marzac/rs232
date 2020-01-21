@@ -6,7 +6,7 @@
 
     The MIT License (MIT)
 
-    Copyright (c) 2013-2015 Frédéric Meslin, Florent Touchard
+    Copyright (c) 2013-2015 Frï¿½dï¿½ric Meslin, Florent Touchard
     Email: fredericmeslin@hotmail.com
     Website: www.fredslab.net
     Twitter: @marzacdev
@@ -57,7 +57,16 @@ extern "C" {
     * Website: www.fredslab.net <br>
     * Twitter: \@marzacdev <br>
     */
-    
+
+#define PARITY_NONE          0x00000000          //see comOpen()
+#define PARITY_EVEN          0x10000000          //see comOpen()
+#define PARITY_ODD           0x20000000          //see comOpen()
+#define PARITY_SPACE         0x30000000          //see comOpen()
+#define PARITY_MARK          0x40000000          //see comOpen()
+
+#define PARITY_BITMASK       0xF0000000
+#define BAUDRATE_BITMASK     0x0FFFFFFF
+
 /*****************************************************************************/
     /**
      * \fn int comEnumerate()
@@ -109,10 +118,13 @@ extern "C" {
      * \brief Try to open a port at a specific baudrate
      * \brief (No parity, single stop bit, no hardware flow control)
      * \param[in] index port index
-     * \param[in] baudrate port baudrate
+     * \param[in] baudrate port baudrate plus parity (see PARITY_*).
+     *            i.E. 9600|PARITY_EVEN.
+     *            Optionally also only a baudrate may be specified. In this
+     *            case Parity is PARITY_NONE
      * \return 1 if opened, 0 if not available
      */        
-    int comOpen(int index, int baudrate);
+    int comOpen(int index, int baudrate_and_parity);
     
     /**
      * \fn void comClose(int index)
@@ -142,12 +154,42 @@ extern "C" {
      * \fn int comRead(int index, const char * buffer, size_t len)
      * \brief Read data from the port (non-blocking)
      * \param[in] index port index
-     * \param[in] buffer pointer to receive buffer
+     * \param[out] buffer pointer to receive buffer
      * \param[in] len length of receive buffer in bytes
      * \return number of bytes transferred
      */                
     int comRead(int index, char * buffer, size_t len);
 
+    
+    /**
+     * \brief A blocking version of comRead().
+     * \param[in] index port index
+     * \param[in] buffer pointer to receive buffer
+     * \param[out] len length of receive buffer in bytes
+     * \param[in] maximum number of ms to wait until 'len' bytes are received.
+     * \return number of bytes transferred
+     */
+    int comReadBlocking(int index, char * buffer, size_t len, unsigned timeout);
+    
+    
+    /**
+     * \brief Set DTR Line
+     * \param[in] index port index
+     * \param[in] new state of DTR line
+     * \return 0 on failure otherwise 1
+     */
+    int comSetDtr(int index, int state);
+    
+    
+    /**
+     * \brief Set RTS Line
+     * \param[in] index port index
+     * \param[in] new state of RTS line
+     * \return 0 on failure otherwise 1
+     */
+    int comSetRts(int index, int state);
+    
+    
 #ifdef __cplusplus
 }
 #endif
